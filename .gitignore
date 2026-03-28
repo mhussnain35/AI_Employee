@@ -1,0 +1,43 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment variables and secrets (SECURITY)
+.env
+.env.local
+.env.*.local
+
+# Credentials and secrets
+credentials/
+*.json
+!package.json
+!package-lock.json
+sessions/
+*.pem
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Vault state (optional - if you don't want to sync vault)
+# AI_Employee_Vault/Needs_Action/
+# AI_Employee_Vault/Pending_Approval/
+# AI_Employee_Vault/Updates/
