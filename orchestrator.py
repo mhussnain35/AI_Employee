@@ -1,26 +1,34 @@
 #!/usr/bin/env python3
 """
-Orchestrator for AI Employee.
+Orchestrator for AI Employee with AI Brain Integration.
 
-This script processes files in the Needs_Action folder using Claude Code.
-It reads the Company Handbook for rules and creates action plans.
+This script processes files in the Needs_Action folder using the AI Brain
+(Claude Code or Qwen API). It reads the Company Handbook for rules and
+creates intelligent action plans.
+
+Configuration:
+    Set AI_BRAIN in .env file:
+    - AI_BRAIN=claude  (uses Claude Code CLI)
+    - AI_BRAIN=qwen    (uses Qwen API)
 """
 
-import subprocess
 import sys
+import json
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 
 class Orchestrator:
-    """Orchestrate Claude Code processing of action items."""
+    """Orchestrate AI-powered processing of action items."""
     
-    def __init__(self, vault_path: str | Path):
+    def __init__(self, vault_path: str | Path, use_ai: bool = True):
         """
         Initialize the orchestrator.
         
         Args:
             vault_path: Path to the Obsidian vault root
+            use_ai: Whether to use AI brain for processing (default: True)
         """
         self.vault_path = Path(vault_path)
         self.needs_action = self.vault_path / 'Needs_Action'
@@ -28,6 +36,19 @@ class Orchestrator:
         self.plans = self.vault_path / 'Plans'
         self.dashboard = self.vault_path / 'Dashboard.md'
         self.handbook = self.vault_path / 'Company_Handbook.md'
+        self.use_ai = use_ai
+        
+        # Initialize AI brain if requested
+        self.brain = None
+        if use_ai:
+            try:
+                from ai_brain import AIBrain
+                self.brain = AIBrain()
+                print(f"✓ AI Brain initialized: {self.brain}")
+            except Exception as e:
+                print(f"⚠ Failed to initialize AI Brain: {e}")
+                print("  Falling back to template-based processing")
+                self.use_ai = False
         
         # Ensure directories exist
         self.needs_action.mkdir(parents=True, exist_ok=True)
@@ -40,7 +61,7 @@ class Orchestrator:
     
     def process_item(self, item_path: Path) -> bool:
         """
-        Process a single action item using Claude Code.
+        Process a single action item using AI Brain.
         
         Args:
             item_path: Path to the action file
@@ -56,61 +77,82 @@ class Orchestrator:
         content = item_path.read_text()
         print(f"Content preview:\n{content[:200]}...\n")
         
-        # Create a prompt for Claude Code
-        prompt = self._create_prompt(item_path, content)
+        # Read company handbook
+        handbook_content = ""
+        if self.handbook.exists():
+            handbook_content = self.handbook.read_text()
+            print(f"Company Handbook: Loaded ({len(handbook_content)} chars)")
         
-        # In Bronze Tier, we'll create a plan file instead of running Claude interactively
-        # This demonstrates the workflow without requiring Claude Code subscription
-        plan_path = self._create_plan(item_path, content)
-        
-        print(f"✓ Created plan: {plan_path.name}")
-        print("Note: In production, Claude Code would process this interactively.")
-        
-        return True
+        try:
+            if self.use_ai and self.brain:
+                # Use AI Brain for intelligent processing
+                print(f"Using AI Brain ({self.brain.brain_type}) for reasoning...")
+                
+                # Classify the item
+                print("  Classifying item...")
+                classification = self.brain.classify_item(content)
+                print(f"  Type: {classification.get('type', 'unknown')}")
+                print(f"  Priority: {classification.get('priority', 'normal')}")
+                
+                # Create intelligent plan with AI
+                print("  Creating action plan with AI...")
+                plan_content = self.brain.create_plan(content, handbook_content, item_path)
+                
+                # Save the AI-generated plan
+                plan_path = self._save_plan(plan_content, item_path, classification)
+                print(f"✓ Created AI-generated plan: {plan_path.name}")
+                
+            else:
+                # Fallback to template-based processing
+                print("Using template-based processing (AI not available)...")
+                plan_path = self._create_template_plan(item_path, content)
+                print(f"✓ Created template plan: {plan_path.name}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"✗ Error processing item: {e}")
+            print("  Falling back to template processing...")
+            
+            try:
+                plan_path = self._create_template_plan(item_path, content)
+                print(f"✓ Created fallback template plan: {plan_path.name}")
+                return True
+            except Exception as e2:
+                print(f"✗ Fallback failed: {e2}")
+                return False
     
-    def _create_prompt(self, item_path: Path, content: str) -> str:
-        """Create a prompt for Claude Code."""
-        
-        handbook_content = self.handbook.read_text() if self.handbook.exists() else ""
-        
-        prompt = f"""You are an AI Employee processing tasks from your Obsidian vault.
-
-## Context
-- Vault: {self.vault_path}
-- Current Item: {item_path.name}
-- Item Content:
-{content}
-
-## Company Handbook Rules
-{handbook_content}
-
-## Your Task
-1. Read the item content above
-2. Determine what action needs to be taken
-3. Create a Plan.md file with checkboxes for each step
-4. Follow the Company Handbook rules
-5. Move the item to /Done when complete (or /Pending_Approval if approval needed)
-
-## Output Format
-For each action, create a checkbox:
-- [ ] Action description
-
-Be professional, efficient, and follow the handbook rules.
-"""
-        return prompt
-    
-    def _create_plan(self, item_path: Path, content: str) -> Path:
-        """
-        Create a plan file for the action item.
-        
-        In Bronze Tier, this demonstrates the workflow without
-        requiring interactive Claude Code execution.
-        """
+    def _save_plan(self, plan_content: str, item_path: Path, 
+                   classification: dict) -> Path:
+        """Save AI-generated plan to file."""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         plan_name = f"PLAN_{timestamp}_{item_path.stem}.md"
         plan_path = self.plans / plan_name
         
-        # Extract type from content if available
+        # Add frontmatter to plan
+        full_content = f"""---
+type: ai_plan
+created: {datetime.now().isoformat()}
+source_file: {item_path.name}
+item_type: {classification.get('type', 'unknown')}
+priority: {classification.get('priority', 'normal')}
+ai_brain: {self.brain.brain_type if self.brain else 'none'}
+status: pending
+---
+
+{plan_content}
+"""
+        
+        plan_path.write_text(full_content)
+        return plan_path
+    
+    def _create_template_plan(self, item_path: Path, content: str) -> Path:
+        """Create a template plan (fallback when AI not available)."""
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        plan_name = f"PLAN_{timestamp}_{item_path.stem}.md"
+        plan_path = self.plans / plan_name
+        
+        # Extract type from content
         item_type = "Unknown"
         for line in content.split('\n'):
             if line.startswith('type:'):
@@ -129,7 +171,7 @@ status: pending
 
 ## Source Content
 ```
-{content}
+{content[:1000]}
 ```
 
 ## Required Actions
@@ -144,7 +186,7 @@ Based on the Company Handbook rules:
 - [ ] Move source file to /Done when complete
 
 ## Notes
-*This plan was auto-generated. In production, Claude Code would fill in the specific actions.*
+*This is a template plan. Configure AI_BRAIN in .env for intelligent processing.*
 
 ## Completion Checklist
 - [ ] All actions completed
@@ -182,6 +224,9 @@ Based on the Company Handbook rules:
         print("=" * 60)
         print(f"Vault: {self.vault_path}")
         print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"AI Brain: {'Enabled' if self.use_ai and self.brain else 'Disabled'}")
+        if self.brain:
+            print(f"Brain Type: {self.brain.brain_type}")
         
         pending_items = self.get_pending_items()
         
@@ -217,7 +262,10 @@ def main():
         print(f"Error: Vault not found at {vault_path}")
         sys.exit(1)
     
-    orchestrator = Orchestrator(vault_path)
+    # Check if AI should be used
+    use_ai = '--no-ai' not in sys.argv
+    
+    orchestrator = Orchestrator(vault_path, use_ai=use_ai)
     orchestrator.run()
 
 
