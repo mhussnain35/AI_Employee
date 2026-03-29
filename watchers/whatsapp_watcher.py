@@ -17,11 +17,13 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
-from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext
+from typing import Optional, TYPE_CHECKING
 
 from .base_watcher import BaseWatcher
+
+# Type-only imports for type checkers
+if TYPE_CHECKING:
+    from playwright.sync_api import Page, Browser, BrowserContext
 
 
 # Paths
@@ -82,6 +84,9 @@ class WhatsAppWatcher(BaseWatcher):
             True if browser started successfully, False otherwise
         """
         try:
+            # Import playwright here to avoid issues if not installed
+            from playwright.sync_api import sync_playwright
+            
             playwright = sync_playwright().start()
             
             # Launch Chromium with persistent user data

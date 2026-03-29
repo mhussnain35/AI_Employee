@@ -48,33 +48,41 @@ class AIBrain:
     - Making decisions based on context
     """
     
-    def __init__(self, brain_type: Optional[str] = None):
+    def __init__(self, brain_type: Optional[str] = None, use_mcp: bool = True):
         """
         Initialize the AI Brain.
-        
+
         Args:
             brain_type: Type of AI brain to use ('claude' or 'qwen')
                        If None, reads from AI_BRAIN environment variable
+            use_mcp: Whether to use MCP servers (default: True)
         """
         # Determine brain type
         if brain_type:
             self.brain_type = brain_type.lower()
         else:
             self.brain_type = os.getenv('AI_BRAIN', 'claude').lower()
-        
+
         logger.info(f"Initializing AI Brain: {self.brain_type}")
-        
+
         # Initialize the appropriate processor
         self.processor = self._initialize_processor()
-        
+
         if not self.processor:
             raise ValueError(f"Failed to initialize AI brain: {self.brain_type}")
-        
+
+        # Initialize MCP servers if requested
+        self.mcp_servers = {}
+        if use_mcp:
+            self._initialize_mcp_servers()
+
         logger.info(f"AI Brain '{self.brain_type}' initialized successfully")
+        if self.mcp_servers:
+            logger.info(f"MCP servers available: {list(self.mcp_servers.keys())}")
     
     def _initialize_processor(self):
         """Initialize the appropriate AI processor based on configuration."""
-        
+
         if self.brain_type == 'claude':
             try:
                 from claude_processor import ClaudeProcessor
@@ -87,7 +95,7 @@ class AIBrain:
             except Exception as e:
                 logger.error(f"Failed to initialize Claude processor: {e}")
                 return None
-        
+
         elif self.brain_type == 'qwen':
             try:
                 from qwen_processor import QwenProcessor
@@ -100,11 +108,73 @@ class AIBrain:
             except Exception as e:
                 logger.error(f"Failed to initialize Qwen processor: {e}")
                 return None
-        
+
         else:
             logger.error(f"Unknown AI brain type: {self.brain_type}")
             logger.error("Supported types: 'claude', 'qwen'")
             return None
+    
+    def _initialize_mcp_servers(self):
+        """Initialize MCP servers for external actions."""
+        try:
+            from mcp_servers import EmailMCPServer, WhatsAppMCPServer
+            
+            # Initialize Email MCP
+            try:
+                email_server = EmailMCPServer()
+                if email_server.service:
+                    self.mcp_servers['email'] = email_server
+                    logger.info("Email MCP server initialized")
+                else:
+                    logger.warning("Email MCP server not available (Gmail not authenticated)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Email MCP: {e}")
+            
+            # Initialize WhatsApp MCP (stub)
+            try:
+                whatsapp_server = WhatsAppMCPServer()
+                self.mcp_servers['whatsapp'] = whatsapp_server
+                logger.info("WhatsApp MCP server initialized (stub)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize WhatsApp MCP: {e}")
+            
+        except ImportError:
+            logger.warning("MCP servers not available (mcp_servers package not found)")
+        except Exception as e:
+            logger.warning(f"Failed to initialize MCP servers: {e}")
+    
+    def use_mcp_tool(self, server_name: str, tool_name: str, args: dict) -> dict:
+        """
+        Use an MCP tool from a specific server.
+        
+        Args:
+            server_name: Name of MCP server ('email', 'whatsapp', etc.)
+            tool_name: Name of tool to call
+            args: Tool arguments
+            
+        Returns:
+            Tool result dictionary
+        """
+        if server_name not in self.mcp_servers:
+            return {
+                'success': False,
+                'error': f'MCP server "{server_name}" not available'
+            }
+        
+        server = self.mcp_servers[server_name]
+        return server.call_tool(tool_name, args)
+    
+    def get_mcp_tools(self) -> dict:
+        """
+        Get all available MCP tools from all servers.
+        
+        Returns:
+            Dictionary mapping server names to their tools
+        """
+        result = {}
+        for name, server in self.mcp_servers.items():
+            result[name] = server.get_tools()
+        return result
     
     def process(self, prompt: str, context: Optional[dict] = None) -> str:
         """

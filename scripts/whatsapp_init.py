@@ -27,8 +27,6 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from playwright.sync_api import sync_playwright
-
 
 # Paths
 SESSIONS_DIR = Path(__file__).parent.parent / 'sessions'
@@ -62,8 +60,11 @@ def authenticate() -> bool:
     print("4. Tap 'Link a Device'")
     print("5. Scan the QR code shown in the browser")
     print("\nWaiting for Chrome to open...\n")
-    
+
     try:
+        # Import playwright here to avoid module import errors
+        from playwright.sync_api import sync_playwright
+        
         playwright = sync_playwright().start()
 
         # Launch Chrome browser with persistent context
