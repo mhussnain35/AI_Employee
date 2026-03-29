@@ -5,11 +5,16 @@ AI Brain Test Suite
 Tests for Claude and Qwen AI brain implementations.
 
 Usage:
-    python test_ai_brain.py
+    python -m tests.test_ai_brain
+    # or
+    python tests/test_ai_brain.py
 """
 
 import sys
 from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def print_header(text: str):

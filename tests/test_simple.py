@@ -6,11 +6,16 @@ This script tests the structure and imports without requiring
 actual API credentials or browser sessions.
 
 Usage:
-    python test_simple.py
+    python -m tests.test_simple
+    # or
+    python tests/test_simple.py
 """
 
 import sys
 from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def print_header(text: str):
@@ -208,10 +213,12 @@ def test_main_commands():
     """Test that main.py has all required commands."""
     print_header("Test 5: Main CLI Commands")
     
-    main_path = Path(__file__).parent / "main.py"
+    # Get parent directory (project root)
+    parent_dir = Path(__file__).parent.parent
+    main_path = parent_dir / "main.py"
     
     if not main_path.exists():
-        print("  ✗ main.py not found")
+        print(f"  ✗ main.py not found at {main_path}")
         return False
     
     content = main_path.read_text(encoding='utf-8')
@@ -247,16 +254,19 @@ def test_documentation():
     """Test that documentation files exist."""
     print_header("Test 6: Documentation")
     
+    # Get parent directory (project root)
+    parent_dir = Path(__file__).parent.parent
+    
     docs = {
-        'README.md': 'Main documentation',
-        'SECURITY.md': 'Security guide',
-        'QUICKSTART_SILVER.md': 'Quick start guide',
-        'RUN_SYSTEM_GUIDE.md': 'System runner guide',
-        'QUICK_AUTH.md': 'Authentication guide',
-        'TESTING_GUIDE.md': 'Testing guide',
-        'docs/GMAIL_SETUP.md': 'Gmail setup guide',
-        'docs/WHATSAPP_SETUP.md': 'WhatsApp setup guide',
-        '.env.example': 'Environment variables template'
+        parent_dir / 'README.md': 'Main documentation',
+        parent_dir / 'SECURITY.md': 'Security guide',
+        parent_dir / 'QUICKSTART_SILVER.md': 'Quick start guide',
+        parent_dir / 'RUN_SYSTEM_GUIDE.md': 'System runner guide',
+        parent_dir / 'QUICK_AUTH.md': 'Authentication guide',
+        parent_dir / 'TESTING_GUIDE.md': 'Testing guide',
+        parent_dir / 'docs/GMAIL_SETUP.md': 'Gmail setup guide',
+        parent_dir / 'docs/WHATSAPP_SETUP.md': 'WhatsApp setup guide',
+        parent_dir / '.env.example': 'Environment variables template'
     }
     
     all_exist = True

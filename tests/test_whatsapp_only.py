@@ -6,12 +6,17 @@ This script tests ONLY the WhatsApp Watcher functionality.
 No authentication prompts - just checks if everything is ready.
 
 Usage:
-    python test_whatsapp_only.py
+    python -m tests.test_whatsapp_only
+    # or
+    python tests/test_whatsapp_only.py
 """
 
 import sys
 import time
 from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from datetime import datetime
 
 

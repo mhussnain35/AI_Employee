@@ -6,12 +6,17 @@ This script tests ONLY the Gmail Watcher functionality.
 No authentication prompts - just checks if everything is ready.
 
 Usage:
-    python test_gmail_only.py
+    python -m tests.test_gmail_only
+    # or
+    python tests/test_gmail_only.py
 """
 
 import sys
 import json
 from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from datetime import datetime
 
 
