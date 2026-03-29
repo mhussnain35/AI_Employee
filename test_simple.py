@@ -251,7 +251,9 @@ def test_documentation():
         'README.md': 'Main documentation',
         'SECURITY.md': 'Security guide',
         'QUICKSTART_SILVER.md': 'Quick start guide',
-        'SILVER_TIER_SUMMARY.md': 'Silver tier summary',
+        'RUN_SYSTEM_GUIDE.md': 'System runner guide',
+        'QUICK_AUTH.md': 'Authentication guide',
+        'TESTING_GUIDE.md': 'Testing guide',
         'docs/GMAIL_SETUP.md': 'Gmail setup guide',
         'docs/WHATSAPP_SETUP.md': 'WhatsApp setup guide',
         '.env.example': 'Environment variables template'
