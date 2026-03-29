@@ -246,30 +246,53 @@ def start_whatsapp_watcher(vault_path: Path, whatsapp_auth: bool):
 def start_orchestrator(vault_path: Path):
     """Start the orchestrator to process pending items."""
     from orchestrator import Orchestrator
-    
+
     print_section("Step 5: Starting Orchestrator")
     
-    orchestrator = Orchestrator(vault_path)
-    
+    # Check AI Brain status
+    print("\n  Checking AI Brain...")
+    try:
+        from ai_brain import AIBrain
+        brain = AIBrain()
+        print(f"  ✓ AI Brain initialized: {brain.brain_type}")
+        print(f"  ✓ Processor: {type(brain.processor).__name__}")
+        use_ai = True
+    except Exception as e:
+        print(f"  ⚠ AI Brain not available: {e}")
+        print(f"  ⊘ Using template-based processing")
+        use_ai = False
+
+    orchestrator = Orchestrator(vault_path, use_ai=use_ai)
+
     # Process any pending items
     pending = orchestrator.get_pending_items()
-    
+
     if pending:
         print(f"\n  Found {len(pending)} pending item(s)")
         orchestrator.run()
     else:
         print("\n  ✓ No pending items to process")
-    
+
     return orchestrator
 
 
 def print_status(vault_path: Path, watchers: dict):
     """Print the current system status."""
     print_section("System Status")
-    
+
     print(f"\n  Vault: {vault_path}")
     print(f"  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
+    # Show AI Brain status
+    print("\n  AI Brain:")
+    try:
+        from ai_brain import AIBrain
+        brain = AIBrain()
+        print(f"    ✓ Type: {brain.brain_type}")
+        print(f"    ✓ Processor: {type(brain.processor).__name__}")
+    except:
+        print(f"    ⊘ Not configured (using templates)")
+
     print("\n  Active Watchers:")
     if watchers.get('file'):
         print("    ✓ File System Watcher")
@@ -277,17 +300,17 @@ def print_status(vault_path: Path, watchers: dict):
         print("    ✓ Gmail Watcher")
     if watchers.get('whatsapp'):
         print("    ✓ WhatsApp Watcher")
-    
+
     # Count items
     needs_action = len(list((vault_path / 'Needs_Action').glob('*.md')))
     plans = len(list((vault_path / 'Plans').glob('*.md')))
     done = len(list((vault_path / 'Done').glob('*.md')))
-    
+
     print(f"\n  Items:")
     print(f"    • Needs Action: {needs_action}")
     print(f"    • Plans: {plans}")
     print(f"    • Done: {done}")
-    
+
     print("\n" + "="*70)
     print("✓ AI Employee System is RUNNING!")
     print("="*70)

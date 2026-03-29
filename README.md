@@ -9,6 +9,7 @@ A **Digital FTE (Full-Time Equivalent)** is an AI agent that works for you 24/7,
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - UV package manager
 - Obsidian (optional, for viewing vault)
@@ -54,6 +55,7 @@ python main.py process
 The Silver Tier includes **all Bronze features** plus:
 
 ### ✓ Gmail Integration
+
 - OAuth2 authentication with auto-refresh
 - Monitors unread and important emails
 - Creates action files with full email content
@@ -61,6 +63,7 @@ The Silver Tier includes **all Bronze features** plus:
 - Token auto-refresh mechanism
 
 ### ✓ WhatsApp Integration
+
 - Playwright with Chromium browser
 - Persistent session (scan QR code once)
 - Keyword monitoring (urgent, asap, invoice, payment, help)
@@ -68,12 +71,14 @@ The Silver Tier includes **all Bronze features** plus:
 - Real-time message detection
 
 ### ✓ Security & Configuration
+
 - `.env.example` - Environment variables template
 - Secure credential storage (`credentials/`, `sessions/`)
 - Comprehensive security documentation
 - Step-by-step setup guides
 
 ### ✓ Enhanced CLI
+
 - `setup-gmail` - OAuth2 authentication
 - `setup-whatsapp` - QR code scanning
 - `watcher-gmail` - Gmail watcher only
@@ -153,6 +158,7 @@ Lightweight Python scripts run continuously, monitoring various inputs:
 When a watcher detects a new item, it creates an action file in `Needs_Action/`.
 
 #### 2. Reasoning (Claude Code)
+
 The orchestrator processes items in `Needs_Action/`:
 
 1. Reads the action file content
@@ -172,6 +178,7 @@ Claude Code uses MCP (Model Context Protocol) servers to act:
 - **Social Media MCP** (Gold): Post to LinkedIn, Twitter, etc.
 
 #### 4. Human-in-the-Loop
+
 For sensitive actions:
 
 1. Claude creates file in `Pending_Approval/`
@@ -183,29 +190,38 @@ For sensitive actions:
 ## Workflow Example
 
 ### Step 1: Drop a File
+
 Place any file in `AI_Employee_Vault/Inbox/`:
+
 ```
 client_invoice_request.txt
 ```
 
 ### Step 2: Watcher Detects
+
 The FileSystemWatcher automatically creates an action file:
+
 ```
 Needs_Action/FILE_20260327_153650_client_invoice_request.txt.md
 ```
 
 ### Step 3: Process Item
+
 Run the orchestrator:
+
 ```bash
 python main.py process
 ```
 
 ### Step 4: Plan Created
+
 A plan is created in `Plans/`:
+
 ```markdown
 # Action Plan: client_invoice_request.txt
 
 ## Required Actions
+
 - [ ] Review the invoice request
 - [ ] Check Company Handbook rules (amount > $500 requires approval)
 - [ ] Create invoice draft
@@ -213,6 +229,7 @@ A plan is created in `Plans/`:
 ```
 
 ### Step 5: Human Approval (if needed)
+
 For amounts > $500, Claude moves the file to `Pending_Approval/` for your review.
 
 ---
@@ -228,6 +245,7 @@ For amounts > $500, Claude moves the file to `Pending_Approval/` for your review
 2. Update the vault path in the configuration
 
 3. Start Claude Code:
+
    ```bash
    claude
    ```
@@ -245,18 +263,21 @@ For amounts > $500, Claude moves the file to `Pending_Approval/` for your review
 The `Company_Handbook.md` contains your rules of engagement:
 
 ### Communication Rules
+
 - Always be polite and professional
 - Respond to urgent messages within 1 hour
 - Flag VIP contacts for immediate attention
 
 ### Financial Rules
-| Amount | Action Required |
-|--------|-----------------|
-| < $100 | Auto-log only |
-| $100 - $500 | Log + notify human |
-| > $500 | Require approval before action |
+
+| Amount      | Action Required                |
+| ----------- | ------------------------------ |
+| < $100      | Auto-log only                  |
+| $100 - $500 | Log + notify human             |
+| > $500      | Require approval before action |
 
 ### Task Priority Levels
+
 1. **Critical**: Response within 1 hour
 2. **High**: Response within 4 hours
 3. **Normal**: Response within 24 hours
@@ -267,6 +288,7 @@ The `Company_Handbook.md` contains your rules of engagement:
 ## Testing
 
 ### Run Unit Tests
+
 ```bash
 # Test the FileSystemWatcher
 python test_watcher.py
@@ -276,7 +298,9 @@ python test_e2e.py
 ```
 
 ### Expected Output
+
 All tests should pass with:
+
 - ✓ Action files created in Needs_Action
 - ✓ Plans generated in Plans folder
 - ✓ Dashboard updated with stats
@@ -290,6 +314,7 @@ Current dependencies (managed by UV):
 - `watchdog>=6.0.0` - File system monitoring
 
 To add new dependencies:
+
 ```bash
 uv add <package-name>
 ```
@@ -312,16 +337,16 @@ To upgrade to **Silver Tier**, implement:
 
 ## Project Structure
 
-| File | Purpose |
-|------|---------|
-| `main.py` | Main entry point with CLI commands |
-| `orchestrator.py` | Processes pending items with Claude Code |
-| `setup_vault.py` | Initializes vault folder structure |
-| `watchers/base_watcher.py` | Abstract base class for all watchers |
-| `watchers/filesystem_watcher.py` | Monitors Inbox folder |
-| `test_watcher.py` | Unit tests for watcher |
-| `test_e2e.py` | End-to-end integration tests |
-| `claude_config.json` | Claude Code MCP configuration template |
+| File                             | Purpose                                  |
+| -------------------------------- | ---------------------------------------- |
+| `main.py`                        | Main entry point with CLI commands       |
+| `orchestrator.py`                | Processes pending items with Claude Code |
+| `setup_vault.py`                 | Initializes vault folder structure       |
+| `watchers/base_watcher.py`       | Abstract base class for all watchers     |
+| `watchers/filesystem_watcher.py` | Monitors Inbox folder                    |
+| `test_watcher.py`                | Unit tests for watcher                   |
+| `test_e2e.py`                    | End-to-end integration tests             |
+| `claude_config.json`             | Claude Code MCP configuration template   |
 
 ---
 
@@ -330,15 +355,12 @@ To upgrade to **Silver Tier**, implement:
 This project is part of the **Personal AI Employee Hackathon 0: Building Autonomous FTEs in 2026**.
 
 **Resources:**
+
 - [Requirements Document](reqment.md)
 - [Claude Code Documentation](https://claude.com/product/claude-code)
 - [Obsidian Documentation](https://obsidian.md)
 - [MCP Servers](https://github.com/modelcontextprotocol)
 
-**Weekly Meetings:** Wednesdays at 10:00 PM PKT on Zoom
-- Meeting ID: 871 8870 7642
-- Passcode: 744832
-
 ---
 
-*Your AI Employee works 168 hours/week vs a human's 40 hours. That's 4.2x more availability at ~10% of the cost.*
+_Your AI Employee works 168 hours/week vs a human's 40 hours. That's 4.2x more availability at ~10% of the cost._
