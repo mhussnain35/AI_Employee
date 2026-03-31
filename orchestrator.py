@@ -102,11 +102,21 @@ class Orchestrator:
                 plan_path = self._save_plan(plan_content, item_path, classification)
                 print(f"✓ Created AI-generated plan: {plan_path.name}")
                 
+                # Move item to Done after processing
+                print("  Moving item to Done folder...")
+                self._move_to_done(item_path)
+                print(f"✓ Item moved to Done/")
+                
             else:
                 # Fallback to template-based processing
                 print("Using template-based processing (AI not available)...")
                 plan_path = self._create_template_plan(item_path, content)
                 print(f"✓ Created template plan: {plan_path.name}")
+                
+                # Move item to Done after processing
+                print("  Moving item to Done folder...")
+                self._move_to_done(item_path)
+                print(f"✓ Item moved to Done/")
             
             return True
             
@@ -117,10 +127,53 @@ class Orchestrator:
             try:
                 plan_path = self._create_template_plan(item_path, content)
                 print(f"✓ Created fallback template plan: {plan_path.name}")
+                
+                # Move item to Done even on error
+                print("  Moving item to Done folder...")
+                self._move_to_done(item_path)
+                print(f"✓ Item moved to Done/")
                 return True
             except Exception as e2:
                 print(f"✗ Fallback failed: {e2}")
                 return False
+    
+    def _move_to_done(self, item_path: Path) -> Path:
+        """
+        Move an item from Needs_Action to Done folder.
+        
+        Args:
+            item_path: Path to the item file
+            
+        Returns:
+            Path to the file in Done folder
+        """
+        done_path = self.done / item_path.name
+        
+        # Add completion timestamp
+        content = item_path.read_text()
+        
+        # Check if already has completion info
+        if 'completed:' not in content.lower():
+            # Add completion metadata
+            if '---' in content:
+                # Has frontmatter, add completed status
+                parts = content.split('---', 2)
+                if len(parts) >= 3:
+                    frontmatter = parts[1]
+                    if 'completed:' not in frontmatter:
+                        frontmatter += f"\ncompleted: {datetime.now().isoformat()}"
+                        content = f"---{frontmatter}---{parts[2]}"
+            
+            # Add completion note at end
+            content += f"\n\n---\n\n**Completed:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n*Processed by AI Employee Orchestrator*"
+        
+        # Write to Done folder
+        done_path.write_text(content)
+        
+        # Remove from Needs_Action
+        item_path.unlink()
+        
+        return done_path
     
     def _save_plan(self, plan_content: str, item_path: Path, 
                    classification: dict) -> Path:
